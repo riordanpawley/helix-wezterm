@@ -2,9 +2,9 @@
 
 set -x
 
-status_line=$(wezterm cli get-text | rg -e "(?:NOR\s+|NORMAL|INS\s+|INSERT|SEL\s+|SELECT)\s+[\x{2800}-\x{28FF}]*\s+(\S*)\s[^│]* (\d+):*.*" -o --replace '$1 $2')
-filename=$(echo "$status_line" | awk '{ print $1}')
-line_number=$(echo "$status_line" | awk '{ print $2}')
+# status_line=$(wezterm cli get-text | rg -e "()(\d+):*.*" -o --replace '$1 $2')
+# filename=$(echo "$status_line" | awk '{ print $1}')
+# line_number=$(echo "$status_line" | awk '{ print $2}')
 
 split_pane_down() {
   bottom_pane_id=$(wezterm cli get-pane-direction down)
@@ -22,17 +22,16 @@ split_pane_down() {
 }
 
 pwd=$PWD
-basedir=$(dirname "$filename")
-basename=$(basename "$filename")
-basename_without_extension="${basename%.*}"
-extension="${filename##*.}"
+# basedir=$(dirname "$filename")
+# basename=$(basename "$filename")
+# basename_without_extension="${basename%.*}"
+# extension="${filename##*.}"
 
 case "$1" in
-  "blame")
-    split_pane_down
-    echo "cd $pwd; git log --pretty=short -u -L $line_number,$line_number:$filename"
-    echo "cd $pwd; tig blame $filename +$line_number" | $send_to_bottom_pane
-    ;;
+  # "blame")
+  #   split_pane_down
+  #   echo "cd $pwd; git log --pretty=short -u -L $line_number,$line_number:$filename" | $send_to_bottom_pane
+  #   ;;
   "explorer")
     left_pane_id=$(wezterm cli get-pane-direction left)
     if [ -z "${left_pane_id}" ]; then
@@ -63,59 +62,59 @@ case "$1" in
         echo "cd $pwd; lazygit" | $send_to_bottom_pane
     fi
     ;;
-  "open")
-    gh browse "$filename":"$line_number"  
-    ;;
-  "run")
-    split_pane_down
-    case "$extension" in
-      "c")
-        run_command="clang -lcmocka -lmpfr -Wall -g -O1 $filename -o $basedir/$basename_without_extension && $basedir/$basename_without_extension"
-        ;;
-      "go")
-        run_command="go run $basedir/*.go"
-        ;;
-      "md")
-        run_command="mdcat -p $filename"
-        ;;
-      "rkt"|"scm")
-        run_command="racket $filename"
-        ;;
-      "rs")
-        run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo run; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end"
-        ;;
-      "sh")
-        run_command="sh $filename"
-        ;;
-    esac
-    echo "$run_command" | $send_to_bottom_pane
-    ;;
-  "test")
-    case "$extension" in
-      "go")
-        test_name=$(head -"$line_number" "$filename" | tail -1 | sed -n 's/func \([^(]*\).*/\1/p')
-        if [ -n "$test_name" ]; then
-          run_command="go test -run=$test_name -v ./$basedir/...; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
-        else
-          run_command="go test -v ./$basedir/...; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
-        fi
-        ;;
-      "hurl")
-        run_command="hurl --test --very-verbose --pretty-print --color --variable epoch=$(date +%s) $filename"
-        ;;
-      "rs")
-        test_name=$(head -"$line_number" "$filename" | tail -1 | sed -n 's/^.*fn \([^ ]*\)().*$/\1/p')
-        if [ -n "$test_name" ]; then
-          run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo test $test_name; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
-        else
-          run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo test; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
-        fi
-        ;;
-    esac
+  # "open")
+  #   gh browse "$filename":"$line_number"  
+  #   ;;
+  # "run")
+  #   split_pane_down
+  #   case "$extension" in
+  #     "c")
+  #       run_command="clang -lcmocka -lmpfr -Wall -g -O1 $filename -o $basedir/$basename_without_extension && $basedir/$basename_without_extension"
+  #       ;;
+  #     "go")
+  #       run_command="go run $basedir/*.go"
+  #       ;;
+  #     "md")
+  #       run_command="mdcat -p $filename"
+  #       ;;
+  #     "rkt"|"scm")
+  #       run_command="racket $filename"
+  #       ;;
+  #     "rs")
+  #       run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo run; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end"
+  #       ;;
+  #     "sh")
+  #       run_command="sh $filename"
+  #       ;;
+  #   esac
+  #   echo "$run_command" | $send_to_bottom_pane
+  #   ;;
+  # "test")
+  #   case "$extension" in
+  #     "go")
+  #       test_name=$(head -"$line_number" "$filename" | tail -1 | sed -n 's/func \([^(]*\).*/\1/p')
+  #       if [ -n "$test_name" ]; then
+  #         run_command="go test -run=$test_name -v ./$basedir/...; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
+  #       else
+  #         run_command="go test -v ./$basedir/...; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
+  #       fi
+  #       ;;
+  #     "hurl")
+  #       run_command="hurl --test --very-verbose --pretty-print --color --variable epoch=$(date +%s) $filename"
+  #       ;;
+  #     "rs")
+  #       test_name=$(head -"$line_number" "$filename" | tail -1 | sed -n 's/^.*fn \([^ ]*\)().*$/\1/p')
+  #       if [ -n "$test_name" ]; then
+  #         run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo test $test_name; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
+  #       else
+  #         run_command="cd $pwd/$(echo "$filename" | sed 's|src/.*$||'); cargo test; if [ \$status = 0 ]; wezterm cli activate-pane-direction up; end;"
+  #       fi
+  #       ;;
+  #   esac
 
-    split_pane_down
-    echo "$run_command" | $send_to_bottom_pane
-    ;;
+  #   split_pane_down
+  #   echo "$run_command" | $send_to_bottom_pane
+  #   ;;
   "tgpt")
     split_pane_down
     echo "tgpt '$(pbpaste)'" | $send_to_bottom_pane
